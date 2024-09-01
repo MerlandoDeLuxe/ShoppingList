@@ -1,14 +1,18 @@
 package com.example.shoppinglist.data
 
 import android.util.Log
-import com.example.shoppinglist.database.ShopListItemDAO
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.example.shoppinglist.data.database.ShopListItemDAO
 import com.example.shoppinglist.domain.ShopItem
 import com.example.shoppinglist.domain.ShopListRepository
 
 object ShopListRepositoryImpl : ShopListRepository {
     private val TAG = "ShopListRepositoryImpl"
 
+    private val shopListLD: MutableLiveData<List<ShopItem>> = MutableLiveData()
     private val listOfItems = mutableListOf<ShopItem>()
+
     private var autoIncrementId = 0
 
     init {
@@ -24,6 +28,7 @@ object ShopListRepositoryImpl : ShopListRepository {
             shopItem.id = autoIncrementId++
         }
         listOfItems.add(shopItem)
+        updateList()
     }
 
     override fun getShopItem(shopItemId: Int): ShopItem {
@@ -31,18 +36,24 @@ object ShopListRepositoryImpl : ShopListRepository {
             ?: throw RuntimeException("Элемент с ID $shopItemId не найден")
     }
 
-    override fun getShopList(): List<ShopItem> {
-        return listOfItems.toMutableList()
+    override fun getShopList(): LiveData<List<ShopItem>> {
+        return shopListLD
     }
 
     override fun removeShopItem(shopItem: ShopItem) {
         listOfItems.remove(shopItem)
+        updateList()
     }
 
     override fun editShopItem(shopItem: ShopItem): ShopItem {
         val oldElement = getShopItem(shopItem.id)
         removeShopItem(oldElement)
         addShopItemToList(shopItem)
+        updateList()
         return shopItem
+    }
+
+    private fun updateList(){
+        shopListLD.value = listOfItems.toList()
     }
 }

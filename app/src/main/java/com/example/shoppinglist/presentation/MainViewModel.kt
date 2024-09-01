@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.shoppinglist.data.ShopListRepositoryImpl
-import com.example.shoppinglist.database.ShopListItemDatabase
+import com.example.shoppinglist.data.database.ShopListItemDatabase
 import com.example.shoppinglist.domain.EditShopItemUseCase
 import com.example.shoppinglist.domain.GetShopListItemUseCase
 import com.example.shoppinglist.domain.RemoveShopItemUseCase
@@ -26,7 +26,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val editShopListItemUseCase = EditShopItemUseCase(repository)
     private val removeShopItemUseCase = RemoveShopItemUseCase(repository)
 
-    val shopListLD: MutableLiveData<List<ShopItem>> = MutableLiveData()
+    val shopListLD = getShopListItemUseCase.getShopList()
+    val shopListFromDB : MutableLiveData<List<ShopItem>> = MutableLiveData()
 
     init {
         getShopListAndSetToDB()
@@ -37,7 +38,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                shopListLD.value = it
+                shopListFromDB.value = it
             }, {
                 Log.d(TAG, "getShopListFromDB: Ошибка подключения к БД: ${it.message}")
             })
@@ -75,15 +76,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getShopListAndSetToDB() {
-        val disposable = connectDB.saveListToDatabase(getShopListItemUseCase.getShopList())
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                getShopListFromDB()
-            }, {
-                Log.d(TAG, "getShopListAndSetToDB: Ошибка подключения к БД: ${it.message}")
-            })
-        compositeDisposable.add(disposable)
+        val disposable = getShopListItemUseCase.getShopList().value?.let {
+            connectDB.saveListToDatabase(it)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    getShopListFromDB()
+                }, {
+                    Log.d(TAG, "getShopListAndSetToDB: Ошибка подключения к БД: ${it.message}")
+                })
+        }
+        if (disposable != null) {
+            compositeDisposable.add(disposable)
+        }
     }
 
     override fun onCleared() {

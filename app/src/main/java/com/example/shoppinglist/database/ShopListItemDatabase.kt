@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.shoppinglist.domain.ShopItem
 
-@Database(entities = [ShopItem::class], version = 1, exportSchema = false)
+@Database(entities = [ShopItem::class], version = 2, exportSchema = false)
 abstract class ShopListItemDatabase : RoomDatabase() {
 
     companion object {
@@ -19,7 +19,7 @@ abstract class ShopListItemDatabase : RoomDatabase() {
                 db_instance = Room.databaseBuilder(
                     application, ShopListItemDatabase::class.java,
                     DB_NAME
-                ).build()
+                ).fallbackToDestructiveMigration().build()
             }
             return db_instance as ShopListItemDatabase
         }

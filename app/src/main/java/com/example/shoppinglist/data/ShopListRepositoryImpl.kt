@@ -1,14 +1,23 @@
 package com.example.shoppinglist.data
 
-import android.app.Application
-import com.example.shoppinglist.database.ShopListItemDatabase
+import android.util.Log
+import com.example.shoppinglist.database.ShopListItemDAO
 import com.example.shoppinglist.domain.ShopItem
 import com.example.shoppinglist.domain.ShopListRepository
 
 object ShopListRepositoryImpl : ShopListRepository {
+    private val TAG = "ShopListRepositoryImpl"
 
     private val listOfItems = mutableListOf<ShopItem>()
     private var autoIncrementId = 0
+
+    init {
+        for (i in 0..10) {
+            val item = ShopItem("Имя $i", i, true, 0)
+            listOfItems.add(item)
+        }
+        Log.d(TAG, "Элементы списка: $listOfItems")
+    }
 
     override fun addShopItemToList(shopItem: ShopItem) {
         if (shopItem.id == ShopItem.UNDEFINED_ID) {
@@ -30,9 +39,10 @@ object ShopListRepositoryImpl : ShopListRepository {
         listOfItems.remove(shopItem)
     }
 
-    override fun editShopItem(shopItem: ShopItem) {
+    override fun editShopItem(shopItem: ShopItem): ShopItem {
         val oldElement = getShopItem(shopItem.id)
         removeShopItem(oldElement)
         addShopItemToList(shopItem)
+        return shopItem
     }
 }

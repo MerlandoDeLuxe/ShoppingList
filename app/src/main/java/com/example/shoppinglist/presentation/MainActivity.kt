@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.shoppinglist.R
+import com.example.shoppinglist.data.ShopListRepositoryImpl
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,4 +19,5 @@ class MainActivity : AppCompatActivity() {
             insets
         }
     }
+
 }

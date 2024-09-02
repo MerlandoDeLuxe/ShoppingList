@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.example.shoppinglist.data.database.ShopListItemDAO
 import com.example.shoppinglist.domain.ShopItem
 import com.example.shoppinglist.domain.ShopListRepository
+import kotlin.random.Random
 
 object ShopListRepositoryImpl : ShopListRepository {
     private val TAG = "ShopListRepositoryImpl"
@@ -17,7 +18,7 @@ object ShopListRepositoryImpl : ShopListRepository {
 
     init {
         for (i in 0..10) {
-            val item = ShopItem("Имя $i", i, true, 0)
+            val item = ShopItem("Имя $i", i, Random.nextBoolean(), 0)
             listOfItems.add(item)
         }
         Log.d(TAG, "Элементы списка: $listOfItems")
@@ -36,8 +37,8 @@ object ShopListRepositoryImpl : ShopListRepository {
             ?: throw RuntimeException("Элемент с ID $shopItemId не найден")
     }
 
-    override fun getShopList(): LiveData<List<ShopItem>> {
-        return shopListLD
+    override fun getShopList(): List<ShopItem> {
+        return listOfItems
     }
 
     override fun removeShopItem(shopItem: ShopItem) {

@@ -27,9 +27,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val removeShopItemUseCase = RemoveShopItemUseCase(repository)
 
     val shopListLD = getShopListItemUseCase.getShopList()
-    val shopListFromDB : MutableLiveData<List<ShopItem>> = MutableLiveData()
+    val shopListFromDB: MutableLiveData<List<ShopItem>> = MutableLiveData()
 
     init {
+        //removeAllElementsShopItemElementFromDB()
         getShopListAndSetToDB()
     }
 
@@ -46,11 +47,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeShopItemFromDB(shopItem: ShopItem) {
-        val disposable = connectDB.removeShopItemElementFromDB(shopItem)
+        val disposable = connectDB.removeShopItemFromDB(shopItem)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.d(TAG, "removeShopItemFromDB: Удаление успешно завершено")
+                getShopListFromDB()
+                Log.d(TAG, "removeShopItemFromDB: удаление $shopItem успешно завершено")
+            }, {
+                Log.d(TAG, "removeShopItemFromDB: Ошибка подключения к БД: ${it.message}")
+            })
+        compositeDisposable.add(disposable)
+    }
+
+    fun removeAllElementsShopItemElementFromDB() {
+        val disposable = connectDB.removeAllElementsShopItemElementFromDB()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                Log.d(TAG, "removeShopItemFromDB: Удаление всех элементов успешно завершено")
                 getShopListFromDB()
             }, {
                 Log.d(TAG, "removeShopItemFromDB: Ошибка подклчюения к БД ${it.message}")
@@ -59,8 +73,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun editShopListItemAndSaveToDB(shopItem: ShopItem) {
+        if (shopItem.enabled) {
+            shopItem.enabled = false
+        } else {
+            shopItem.enabled = true
+        }
         val disposable =
-            connectDB.editShopItemElement(editShopListItemUseCase.editShopItem(shopItem))
+            connectDB.editShopItemElement(shopItem)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
@@ -76,7 +95,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getShopListAndSetToDB() {
-        val disposable = getShopListItemUseCase.getShopList().value?.let {
+        Log.d(TAG, "getShopListAndSetToDB: мы тут")
+        val disposable = getShopListItemUseCase.getShopList().let {
             connectDB.saveListToDatabase(it)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

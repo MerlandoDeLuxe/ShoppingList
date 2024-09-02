@@ -2,21 +2,21 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
-import com.example.shoppinglist.data.ShopListRepositoryImpl
 import com.example.shoppinglist.domain.ShopItem
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private lateinit var viewModel: MainViewModel
-    private lateinit var buttonUpdate: Button
-    private lateinit var buttonRemove: Button
+    private lateinit var recycleView: RecyclerView
+    private lateinit var shopListAdapter: ShopListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,25 +29,62 @@ class MainActivity : AppCompatActivity() {
         }
 
         initializeAllElements()
+        observeViewModel()
+        setupOnClickListener()
+        setupSwipeClickListener()
 
-        viewModel.shopListLD.observe(this) {
-            Log.d(TAG, "onCreate: it = ${it.toString()}")
+    }
+
+    private fun setupOnClickListener() {
+        shopListAdapter.onShopItemLongClickListener = {
+            viewModel.editShopListItemAndSaveToDB(it)
         }
 
-        buttonUpdate.setOnClickListener {
-            val shopItem = ShopItem("Имя 1", 10, false, 0)
-            viewModel.editShopListItemAndSaveToDB(shopItem)
+        shopListAdapter.onShopItemClickListener = {
+            Log.d(TAG, "onCreate: Вы нажали: ${it.name}")
         }
+    }
 
-        buttonRemove.setOnClickListener {
-            val shopItem = ShopItem("Имя 0", 0, true, 1)
-            viewModel.removeShopItemFromDB(shopItem)
+    private fun setupSwipeClickListener() {
+        val itemTouchHelperCallback = object :
+            ItemTouchHelper.SimpleCallback(
+                0,
+                ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+            ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.layoutPosition
+                val shopItem = shopListAdapter.shopItemList.get(position)
+
+                viewModel.removeShopItemFromDB(shopItem)
+            }
+        }
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(recycleView)
+    }
+
+    private fun observeViewModel() {
+        viewModel.shopListFromDB.observe(this) {
+            Log.d(TAG, "onCreate: it = ${it}")
+            shopListAdapter.shopItemList = it
         }
     }
 
     private fun initializeAllElements() {
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-        buttonUpdate = findViewById(R.id.buttonUpdate)
-        buttonRemove = findViewById(R.id.buttonRemove)
+        shopListAdapter = ShopListAdapter()
+        recycleView = findViewById(R.id.recycleView)
+        with(recycleView) {
+            recycledViewPool.setMaxRecycledViews(ShopListAdapter.ENABLED_VIEW, 15)
+            recycledViewPool.setMaxRecycledViews(ShopListAdapter.DISABLED_VIEW, 15)
+            adapter = shopListAdapter
+        }
     }
 }

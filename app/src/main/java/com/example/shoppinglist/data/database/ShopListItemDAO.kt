@@ -22,6 +22,9 @@ interface ShopListItemDAO {
     @Update
     fun editShopItemElement(shopItem: ShopItem): Completable
 
+    @Query("delete from shop_item")
+    fun removeAllElementsShopItemElementFromDB(): Completable
+
     @Delete
-    fun removeShopItemElementFromDB(shopItem: ShopItem): Completable
+    fun removeShopItemFromDB(shopItem: ShopItem): Completable
 }

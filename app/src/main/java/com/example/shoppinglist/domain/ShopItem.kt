@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class ShopItem(
     val name: String,
     val count: Int,
-    val enabled: Boolean,
+    var enabled: Boolean,
     @PrimaryKey(autoGenerate = true) var id: Int
 ) {
     //Неопределенный ид

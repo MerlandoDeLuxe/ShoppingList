@@ -40,9 +40,11 @@ class MainActivity : AppCompatActivity() {
             viewModel.editShopListItemAndSaveToDB(it)
         }
 
-        shopListAdapter.onShopItemClickListener = {
-            Log.d(TAG, "onCreate: Вы нажали: ${it.name}")
-        }
+//        shopListAdapter.onShopItemClickListener = {
+//            Log.d(TAG, "setupOnClickListener: it = $it")
+////            viewModel.editShopListItemAndSaveToDB(it)
+//            Log.d(TAG, "setupOnClickListener: it = $it")
+//        }
     }
 
     private fun setupSwipeClickListener() {
@@ -60,9 +62,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.layoutPosition
-                val shopItem = shopListAdapter.shopItemList.get(position)
-
+                val shopItem = shopListAdapter.currentList.get(viewHolder.adapterPosition)
                 viewModel.removeShopItemFromDB(shopItem)
             }
         }
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         viewModel.shopListFromDB.observe(this) {
             Log.d(TAG, "onCreate: it = ${it}")
-            shopListAdapter.shopItemList = it
+            shopListAdapter.submitList(it)
         }
     }
 
@@ -82,8 +82,14 @@ class MainActivity : AppCompatActivity() {
         shopListAdapter = ShopListAdapter()
         recycleView = findViewById(R.id.recycleView)
         with(recycleView) {
-            recycledViewPool.setMaxRecycledViews(ShopListAdapter.ENABLED_VIEW, 15)
-            recycledViewPool.setMaxRecycledViews(ShopListAdapter.DISABLED_VIEW, 15)
+            recycledViewPool.setMaxRecycledViews(
+                ShopListAdapter.ENABLED_VIEW,
+                ShopListAdapter.MAX_POOL_SIZE
+            )
+            recycledViewPool.setMaxRecycledViews(
+                ShopListAdapter.DISABLED_VIEW,
+                ShopListAdapter.MAX_POOL_SIZE
+            )
             adapter = shopListAdapter
         }
     }

@@ -2,20 +2,19 @@ package com.example.shoppinglist.presentation
 
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.ListAdapter
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 
-class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>() {
+class ShopListAdapter :
+    ListAdapter<ShopItem, ShopItemViewHolder>(ShopItemDiffCalback()) {
 
-    companion object{
+    companion object {
         private const val TAG = "ShopListAdapter"
         const val ENABLED_VIEW = 100
         const val DISABLED_VIEW = 200
+        const val MAX_POOL_SIZE = 30
         private var count = 0;
     }
 
@@ -24,20 +23,7 @@ class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>
     //которая принимает в качестве аргумента ShopItem и ничего не возвращает
     //А если в неё ничего не прилетело, значит в ней null и она может быть нуллабельной
     var onShopItemLongClickListener: ((ShopItem) -> Unit)? = null
-
-    var onShopItemClickListener: ((ShopItem) -> Unit)? = null
-
-    var shopItemList: List<ShopItem> = listOf()
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
-
-    class ShopItemViewHolder(itemView: View) : ViewHolder(itemView) {
-        val textViewShopItemName = itemView.findViewById<TextView>(R.id.textViewShopItemName)
-        val textViewShopItemQuantity =
-            itemView.findViewById<TextView>(R.id.textViewShopItemQuantity)
-    }
+//    var onShopItemClickListener: ((ShopItem) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShopItemViewHolder {
         Log.d(TAG, "onCreateViewHolder: count = ${++count}")
@@ -55,34 +41,25 @@ class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>
     }
 
     override fun getItemViewType(position: Int): Int {
-        if (shopItemList.get(position).enabled) {
-            return ENABLED_VIEW
+        val item = getItem(position)
+        return if (item.enabled) {
+            ENABLED_VIEW
         } else {
-            return DISABLED_VIEW
+            DISABLED_VIEW
         }
     }
 
+
     override fun onBindViewHolder(holder: ShopItemViewHolder, position: Int) {
-        holder.textViewShopItemName.text = shopItemList.get(position).name
-        holder.textViewShopItemQuantity.text = shopItemList[position].count.toString()
+        val shopItem = getItem(position)
+        holder.textViewShopItemName.text = shopItem.name
+        holder.textViewShopItemQuantity.text = shopItem.count.toString()
 
         holder.itemView.setOnLongClickListener {
             //invoke равнозначен просто вызову функции,
             // но поскольку тип нуллабельный, значит надо использовать invoke
-            onShopItemLongClickListener?.invoke(shopItemList.get(position))
+            onShopItemLongClickListener?.invoke(shopItem)
             true
         }
-
-        holder.itemView.setOnClickListener {
-            onShopItemClickListener?.invoke(shopItemList.get(position))
-        }
-    }
-
-    fun interface OnShopItemLongClickListener{
-        fun onShopItemLongClick(shopItem: ShopItem)
-    }
-
-    override fun getItemCount(): Int {
-        return shopItemList.size
     }
 }

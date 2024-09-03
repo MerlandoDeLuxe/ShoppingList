@@ -8,7 +8,7 @@ import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 
 class ShopListAdapter :
-    ListAdapter<ShopItem, ShopItemViewHolder>(ShopItemDiffCalback()) {
+    ListAdapter<ShopItem, ShopItemViewHolder>(ShopItemDiffCallback()) {
 
     companion object {
         private const val TAG = "ShopListAdapter"
@@ -16,6 +16,14 @@ class ShopListAdapter :
         const val DISABLED_VIEW = 200
         const val MAX_POOL_SIZE = 30
         private var count = 0;
+    }
+
+    override fun submitList(list: MutableList<ShopItem>?, commitCallback: Runnable?) {
+        super.submitList(list, commitCallback)
+    }
+
+    override fun submitList(list: MutableList<ShopItem>?) {
+        super.submitList(list?.toList())
     }
 
     //Поскольку у нас объявлен функциональный интерфейс, то мы можем создать переменную
@@ -26,7 +34,7 @@ class ShopListAdapter :
 //    var onShopItemClickListener: ((ShopItem) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShopItemViewHolder {
-        Log.d(TAG, "onCreateViewHolder: count = ${++count}")
+//        Log.d(TAG, "onCreateViewHolder: count = ${++count}")
         val layoutId = when (viewType) {
             ENABLED_VIEW -> R.layout.new_enabled_shopitem_layout_template
             DISABLED_VIEW -> R.layout.new_disabled_shopitem_layout_template
@@ -52,6 +60,8 @@ class ShopListAdapter :
 
     override fun onBindViewHolder(holder: ShopItemViewHolder, position: Int) {
         val shopItem = getItem(position)
+        Log.d(TAG, "onBindViewHolder: shopItem = ${shopItem.id}")
+        Log.d(TAG, "onBindViewHolder: shopItem = ${shopItem.enabled}")
         holder.textViewShopItemName.text = shopItem.name
         holder.textViewShopItemQuantity.text = shopItem.count.toString()
 

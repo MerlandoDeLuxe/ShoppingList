@@ -2,6 +2,7 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -32,19 +33,31 @@ class MainActivity : AppCompatActivity() {
         observeViewModel()
         setupOnClickListener()
         setupSwipeClickListener()
+    }
 
+    private fun observeViewModel() {
+        viewModel.getShopListFromDB().observe(this,{
+            Log.d(TAG, "observeViewModel: из бд прилетел лист: $it")
+            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
+            Log.d(TAG, "notifyDataSetChanged: в адаптере лист: ${shopListAdapter.currentList}")
+            shopListAdapter.submitList(it)
+
+            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
+            Log.d(TAG, "=====================================================================")
+        })
+
+//        viewModel.shopListFromDB.observe(this) {
+//
+//            shopListAdapter.submitList(it)
+//        }
     }
 
     private fun setupOnClickListener() {
         shopListAdapter.onShopItemLongClickListener = {
+           // Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
             viewModel.editShopListItemAndSaveToDB(it)
+            //Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
         }
-
-//        shopListAdapter.onShopItemClickListener = {
-//            Log.d(TAG, "setupOnClickListener: it = $it")
-////            viewModel.editShopListItemAndSaveToDB(it)
-//            Log.d(TAG, "setupOnClickListener: it = $it")
-//        }
     }
 
     private fun setupSwipeClickListener() {
@@ -70,13 +83,6 @@ class MainActivity : AppCompatActivity() {
         itemTouchHelper.attachToRecyclerView(recycleView)
     }
 
-    private fun observeViewModel() {
-        viewModel.shopListFromDB.observe(this) {
-            Log.d(TAG, "onCreate: it = ${it}")
-            shopListAdapter.submitList(it)
-        }
-    }
-
     private fun initializeAllElements() {
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         shopListAdapter = ShopListAdapter()
@@ -90,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                 ShopListAdapter.DISABLED_VIEW,
                 ShopListAdapter.MAX_POOL_SIZE
             )
+            //setHasFixedSize(true)
             adapter = shopListAdapter
         }
     }

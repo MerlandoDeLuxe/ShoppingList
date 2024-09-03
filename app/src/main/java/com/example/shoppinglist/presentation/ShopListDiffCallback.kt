@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.DiffUtil
 import com.example.shoppinglist.domain.ShopItem
 
 @Deprecated("Или этот класс для адаптера или получше - ShopItemDiffCalback")
-class ShopListDiffCalback(
+class ShopListDiffCallback(
     private val oldListShopItem: List<ShopItem>,
     private val newListShopItem: List<ShopItem>
 ) : DiffUtil.Callback() {

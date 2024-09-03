@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity("shop_item")
 data class ShopItem(
-    val name: String,
+    var name: String,
     val count: Int,
     var enabled: Boolean,
     @PrimaryKey(autoGenerate = true) var id: Int

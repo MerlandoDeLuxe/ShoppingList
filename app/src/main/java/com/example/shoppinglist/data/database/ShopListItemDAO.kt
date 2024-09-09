@@ -9,6 +9,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.shoppinglist.domain.ShopItem
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Single
 
 @Dao
 interface ShopListItemDAO {
@@ -30,4 +31,10 @@ interface ShopListItemDAO {
 
     @Delete
     fun removeShopItemFromDB(shopItem: ShopItem): Completable
+
+    @Query("select * from shop_item where id = :id")
+    fun getShopItem(id: Int): Single<ShopItem>
+
+    @Insert
+    fun addNewShopItemToDB(shopItem: ShopItem):Completable
 }

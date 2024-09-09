@@ -18,20 +18,20 @@ class ShopListAdapter :
         private var count = 0;
     }
 
-    override fun submitList(list: MutableList<ShopItem>?, commitCallback: Runnable?) {
-        super.submitList(list, commitCallback)
-    }
-
-    override fun submitList(list: MutableList<ShopItem>?) {
-        super.submitList(list?.toList())
-    }
+//    override fun submitList(list: MutableList<ShopItem>?, commitCallback: Runnable?) {
+//        super.submitList(list, commitCallback)
+//    }
+//
+//    override fun submitList(list: MutableList<ShopItem>?) {
+//        super.submitList(list?.toList())
+//    }
 
     //Поскольку у нас объявлен функциональный интерфейс, то мы можем создать переменную
     //и передать сразу в неё функцию. То есть переменная содержит функцию,
     //которая принимает в качестве аргумента ShopItem и ничего не возвращает
     //А если в неё ничего не прилетело, значит в ней null и она может быть нуллабельной
     var onShopItemLongClickListener: ((ShopItem) -> Unit)? = null
-//    var onShopItemClickListener: ((ShopItem) -> Unit)? = null
+    var onShopItemClickListener: ((ShopItem) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShopItemViewHolder {
 //        Log.d(TAG, "onCreateViewHolder: count = ${++count}")
@@ -71,5 +71,9 @@ class ShopListAdapter :
             onShopItemLongClickListener?.invoke(shopItem)
             true
         }
+
+        holder.itemView.setOnClickListener({
+            onShopItemClickListener?.invoke(shopItem)
+        })
     }
 }

@@ -1,8 +1,6 @@
 package com.example.shoppinglist.presentation
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -11,10 +9,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
-import com.example.shoppinglist.domain.ShopItem
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
+
+    private lateinit var imageViewNewShopItem: FloatingActionButton
     private lateinit var viewModel: MainViewModel
     private lateinit var recycleView: RecyclerView
     private lateinit var shopListAdapter: ShopListAdapter
@@ -36,27 +36,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.getShopListFromDB().observe(this,{
-            Log.d(TAG, "observeViewModel: из бд прилетел лист: $it")
-            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
-            Log.d(TAG, "notifyDataSetChanged: в адаптере лист: ${shopListAdapter.currentList}")
+        viewModel.getShopListFromDB().observe(this) {
             shopListAdapter.submitList(it)
-
-            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
-            Log.d(TAG, "=====================================================================")
-        })
-
-//        viewModel.shopListFromDB.observe(this) {
-//
-//            shopListAdapter.submitList(it)
-//        }
+        }
     }
 
     private fun setupOnClickListener() {
         shopListAdapter.onShopItemLongClickListener = {
-           // Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
             viewModel.editShopListItemAndSaveToDB(it)
-            //Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
+        }
+
+        shopListAdapter.onShopItemClickListener = {
+            val intent = ShopItemActivity.newIntentEditItem(this, it.id)
+            startActivity(intent)
+        }
+
+        imageViewNewShopItem.setOnClickListener {
+            val intent = ShopItemActivity.newIntentAddItem(this)
+            startActivity(intent)
         }
     }
 
@@ -84,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeAllElements() {
+        imageViewNewShopItem = findViewById(R.id.imageViewNewShopItem)
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         shopListAdapter = ShopListAdapter()
         recycleView = findViewById(R.id.recycleView)
@@ -96,7 +94,6 @@ class MainActivity : AppCompatActivity() {
                 ShopListAdapter.DISABLED_VIEW,
                 ShopListAdapter.MAX_POOL_SIZE
             )
-            //setHasFixedSize(true)
             adapter = shopListAdapter
         }
     }

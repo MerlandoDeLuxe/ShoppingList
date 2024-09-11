@@ -17,106 +17,38 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
 class ShopItemActivity : AppCompatActivity() {
-    private lateinit var textInputLayoutName: TextInputLayout
-    private lateinit var editTextName: TextInputEditText
-    private lateinit var textInputLayoutQuantity: TextInputLayout
-    private lateinit var editTextQuantity: TextInputEditText
-    private lateinit var buttonSave: Button
     private var screenMode = MODE_UNKNOWN
     private var shopItemId = ShopItem.UNDEFINED_ID
 
-    private lateinit var viewModel: ShopItemViewModel
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //enableEdgeToEdge()
-        setContentView(R.layout.activity_shop_item)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.shop_item_fragment)) { v, insets ->
+        setContentView(R.layout.activity_shop_item_contrainer)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.shop_item_container)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-//        parseIntent()
-//        initializeAllElements()
-//        screenSelection()
-//        observeViewModel()
-//        addTextChangeListeners()
-    }
-
-    private fun observeViewModel() {
-        viewModel.shouldCloseScreenLD.observe(this) {
-            finish()
+        parseIntent()
+        if (savedInstanceState == null) { //Чтобы фрагмент не пересоздавался при перевороте активити дважды:
+            //тут и в shopitemfragment, проверяем, что состояние null =
+            //то есть переворотов еще не было. Значит только 1 раз вызываем создание фрагмента
+            //То есть если фрагмент уже был добавлен на экран, то добавлять его при перевороте заново не нужно, система это сделает за нас
+            screenSelection()
         }
-
-        viewModel.errorInputNameLD.observe(this) {
-            Log.d(TAG, "observeViewModel: it = $it")
-            if (it) {
-                textInputLayoutName.error = getString(R.string.error_name)
-            } else {
-                textInputLayoutName.error = null
-            }
-        }
-
-        viewModel.errorInputQuantityLD.observe(this) {
-            if (it) {
-                textInputLayoutQuantity.error = getString(R.string.error_quantity)
-            } else {
-                textInputLayoutQuantity.error = null
-            }
-        }
-    }
-
-    private fun addTextChangeListeners() {
-        editTextName.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.resetErrorInputName()
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-
-            }
-        })
-        editTextQuantity.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.resetErrorInputQuantity()
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-            }
-        })
     }
 
     private fun screenSelection() {
-        when (screenMode) {
-            MODE_ADD -> launchAddScreenMode()
-            MODE_EDIT -> launchEditScreenMode()
-        }
-    }
-
-    fun launchEditScreenMode() {
-        viewModel.getShopItem(shopItemId)
-        viewModel.shopItemLD.observe(this) {
-            editTextName.setText(it.name)
-            editTextQuantity.setText(it.count.toString())
-        }
-        buttonSave.setOnClickListener {
-            viewModel.editShopItem(editTextName.text?.toString(), editTextQuantity.text?.toString())
-        }
-    }
-
-    fun launchAddScreenMode() {
-        buttonSave.setOnClickListener {
-            viewModel.addShopItem(editTextName.text.toString(), editTextQuantity.text.toString())
-        }
+        val fragment =
+            when (screenMode) {
+                MODE_ADD -> ShopItemFragment.newInstanceAddItem()
+                MODE_EDIT -> ShopItemFragment.newInstanceEditItem(shopItemId)
+                else -> throw RuntimeException("Неизвестный тип экрана $screenMode")
+            }
+        supportFragmentManager.beginTransaction()
+            .replace(
+                R.id.shop_item_container,
+                fragment
+            ).commit()
     }
 
     fun parseIntent() {
@@ -134,16 +66,6 @@ class ShopItemActivity : AppCompatActivity() {
             }
             shopItemId = intent.getIntExtra(EXTRA_SHOP_ITEM_ID, -1)
         }
-    }
-
-    private fun initializeAllElements() {
-        textInputLayoutName = findViewById(R.id.textInputLayoutName)
-        editTextName = findViewById(R.id.editTextName)
-        textInputLayoutQuantity = findViewById(R.id.textInputLayoutQuantity)
-        editTextQuantity = findViewById(R.id.editTextQuantity)
-        buttonSave = findViewById(R.id.buttonSave)
-
-        viewModel = ViewModelProvider(this).get(ShopItemViewModel::class.java)
     }
 
     companion object {

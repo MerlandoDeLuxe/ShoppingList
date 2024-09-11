@@ -5,7 +5,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#60B5DEB6"
     tools:context=".presentation.ShopItemFragment">
 
     <com.google.android.material.textfield.TextInputLayout

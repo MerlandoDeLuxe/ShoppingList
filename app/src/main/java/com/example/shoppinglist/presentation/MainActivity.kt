@@ -1,14 +1,18 @@
 package com.example.shoppinglist.presentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
+import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
@@ -18,6 +22,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var recycleView: RecyclerView
     private lateinit var shopListAdapter: ShopListAdapter
+
+    private var shopItemContainer: FragmentContainerView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +39,30 @@ class MainActivity : AppCompatActivity() {
         observeViewModel()
         setupOnClickListener()
         setupSwipeClickListener()
+        launchFragmentOnMainScreen()
+
+    }
+
+    fun isVerticalOrientation() =
+        shopItemContainer == null    //Метод, проверяющий, что мы в вертикальном режиме.
+
+    fun launchFragmentOnMainScreen(shopItemId: Int = ShopItem.UNDEFINED_ID) {
+        supportFragmentManager.popBackStack() //Удалить из бекстека предыдущий фрагмент. Если его там нет, то он ничего не делает
+        //Если мы не в вертикальной, а горизонтальной ориентации, то сразу вызываем отображение фрагмента на добавление элемента
+        Log.d(TAG, "onCreate: isVerticalOrientation = ${isVerticalOrientation()}")
+        if (!isVerticalOrientation()) {
+            if (shopItemId != ShopItem.UNDEFINED_ID) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceEditItem(shopItemId))
+                    .addToBackStack(null)
+                    .commit()
+            } else {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceAddItem())
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
     }
 
     private fun observeViewModel() {
@@ -47,13 +77,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         shopListAdapter.onShopItemClickListener = {
-            val intent = ShopItemActivity.newIntentEditItem(this, it.id)
-            startActivity(intent)
+            Log.d(TAG, "setupOnClickListener: isVerticalOrientstion = ${isVerticalOrientation()}")
+            if (!isVerticalOrientation()) {
+                launchFragmentOnMainScreen(it.id)
+            } else {
+                val intent = ShopItemActivity.newIntentEditItem(this, it.id)
+                startActivity(intent)
+            }
         }
 
         imageViewNewShopItem.setOnClickListener {
-            val intent = ShopItemActivity.newIntentAddItem(this)
-            startActivity(intent)
+            if (!isVerticalOrientation()) {
+                launchFragmentOnMainScreen()
+            } else {
+                val intent = ShopItemActivity.newIntentAddItem(this)
+                startActivity(intent)
+            }
         }
     }
 
@@ -96,5 +135,6 @@ class MainActivity : AppCompatActivity() {
             )
             adapter = shopListAdapter
         }
+        shopItemContainer = findViewById(R.id.shop_item_container)
     }
 }

@@ -2,22 +2,28 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
+
+    private lateinit var imageViewNewShopItem: FloatingActionButton
     private lateinit var viewModel: MainViewModel
     private lateinit var recycleView: RecyclerView
     private lateinit var shopListAdapter: ShopListAdapter
+
+    private var shopItemContainer: FragmentContainerView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,30 +39,60 @@ class MainActivity : AppCompatActivity() {
         observeViewModel()
         setupOnClickListener()
         setupSwipeClickListener()
+        launchFragmentOnMainScreen()
+
+    }
+
+    fun isVerticalOrientation() =
+        shopItemContainer == null    //Метод, проверяющий, что мы в вертикальном режиме.
+
+    fun launchFragmentOnMainScreen(shopItemId: Int = ShopItem.UNDEFINED_ID) {
+        supportFragmentManager.popBackStack() //Удалить из бекстека предыдущий фрагмент. Если его там нет, то он ничего не делает
+        //Если мы не в вертикальной, а горизонтальной ориентации, то сразу вызываем отображение фрагмента на добавление элемента
+        Log.d(TAG, "onCreate: isVerticalOrientation = ${isVerticalOrientation()}")
+        if (!isVerticalOrientation()) {
+            if (shopItemId != ShopItem.UNDEFINED_ID) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceEditItem(shopItemId))
+                    .addToBackStack(null)
+                    .commit()
+            } else {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceAddItem())
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
     }
 
     private fun observeViewModel() {
-        viewModel.getShopListFromDB().observe(this,{
-            Log.d(TAG, "observeViewModel: из бд прилетел лист: $it")
-            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
-            Log.d(TAG, "notifyDataSetChanged: в адаптере лист: ${shopListAdapter.currentList}")
+        viewModel.getShopListFromDB().observe(this) {
             shopListAdapter.submitList(it)
-
-            Log.d(TAG, "observeViewModel: в адаптере лист: ${shopListAdapter.currentList}")
-            Log.d(TAG, "=====================================================================")
-        })
-
-//        viewModel.shopListFromDB.observe(this) {
-//
-//            shopListAdapter.submitList(it)
-//        }
+        }
     }
 
     private fun setupOnClickListener() {
         shopListAdapter.onShopItemLongClickListener = {
-           // Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
             viewModel.editShopListItemAndSaveToDB(it)
-            //Log.d(TAG, "setupOnClickListener: долгое нажатие на: $it")
+        }
+
+        shopListAdapter.onShopItemClickListener = {
+            Log.d(TAG, "setupOnClickListener: isVerticalOrientstion = ${isVerticalOrientation()}")
+            if (!isVerticalOrientation()) {
+                launchFragmentOnMainScreen(it.id)
+            } else {
+                val intent = ShopItemActivity.newIntentEditItem(this, it.id)
+                startActivity(intent)
+            }
+        }
+
+        imageViewNewShopItem.setOnClickListener {
+            if (!isVerticalOrientation()) {
+                launchFragmentOnMainScreen()
+            } else {
+                val intent = ShopItemActivity.newIntentAddItem(this)
+                startActivity(intent)
+            }
         }
     }
 
@@ -84,6 +120,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeAllElements() {
+        imageViewNewShopItem = findViewById(R.id.imageViewNewShopItem)
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         shopListAdapter = ShopListAdapter()
         recycleView = findViewById(R.id.recycleView)
@@ -96,8 +133,8 @@ class MainActivity : AppCompatActivity() {
                 ShopListAdapter.DISABLED_VIEW,
                 ShopListAdapter.MAX_POOL_SIZE
             )
-            //setHasFixedSize(true)
             adapter = shopListAdapter
         }
+        shopItemContainer = findViewById(R.id.shop_item_container)
     }
 }

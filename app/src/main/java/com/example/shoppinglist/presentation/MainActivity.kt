@@ -2,11 +2,11 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -15,7 +15,7 @@ import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedListener {
     private val TAG = "MainActivity"
 
     private lateinit var imageViewNewShopItem: FloatingActionButton
@@ -43,10 +43,12 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun isVerticalOrientation() =
+    private fun isVerticalOrientation() =
         shopItemContainer == null    //Метод, проверяющий, что мы в вертикальном режиме.
 
-    fun launchFragmentOnMainScreen(shopItemId: Int = ShopItem.UNDEFINED_ID) {
+    private fun launchFragmentOnMainScreen(
+        shopItemId: Int = ShopItem.UNDEFINED_ID
+    ) {
         supportFragmentManager.popBackStack() //Удалить из бекстека предыдущий фрагмент. Если его там нет, то он ничего не делает
         //Если мы не в вертикальной, а горизонтальной ориентации, то сразу вызываем отображение фрагмента на добавление элемента
         Log.d(TAG, "onCreate: isVerticalOrientation = ${isVerticalOrientation()}")
@@ -57,12 +59,20 @@ class MainActivity : AppCompatActivity() {
                     .addToBackStack(null)
                     .commit()
             } else {
+                val fragment = ShopItemFragment.newInstanceAddItem()
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceAddItem())
+                    .replace(
+                        R.id.shop_item_container, ShopItemFragment.newInstanceAddItem()
+                    )
                     .addToBackStack(null)
                     .commit()
             }
         }
+    }
+
+    override fun onEditingFinished() {
+        Toast.makeText(this@MainActivity, "Успешно", Toast.LENGTH_SHORT).show()
+        supportFragmentManager.popBackStack()
     }
 
     private fun observeViewModel() {

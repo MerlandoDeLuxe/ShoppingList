@@ -16,7 +16,7 @@ import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
-class ShopItemActivity : AppCompatActivity() {
+class ShopItemActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedListener {
     private var screenMode = MODE_UNKNOWN
     private var shopItemId = ShopItem.UNDEFINED_ID
 
@@ -35,6 +35,10 @@ class ShopItemActivity : AppCompatActivity() {
             //То есть если фрагмент уже был добавлен на экран, то добавлять его при перевороте заново не нужно, система это сделает за нас
             screenSelection()
         }
+    }
+
+    override fun onEditingFinished() {
+        finish()
     }
 
     private fun screenSelection() {

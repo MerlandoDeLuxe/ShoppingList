@@ -1,5 +1,6 @@
 package com.example.shoppinglist.presentation
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,6 +18,8 @@ import com.google.android.material.textfield.TextInputLayout
 
 class ShopItemFragment : Fragment() {
 
+    private lateinit var onEditingFinishedListener: OnEditingFinishedListener
+
     private lateinit var textInputLayoutName: TextInputLayout
     private lateinit var editTextName: TextInputEditText
     private lateinit var textInputLayoutQuantity: TextInputLayout
@@ -28,23 +31,69 @@ class ShopItemFragment : Fragment() {
     private var screenMode: String = MODE_UNKNOWN
     private var shopItemId: Int = ShopItem.UNDEFINED_ID
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_shop_item_template, container, false)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate: ")
         parseParams()
         super.onCreate(savedInstanceState)
     }
 
+    override fun onStart() {
+        Log.d(TAG, "onStart: ")
+        super.onStart()
+    }
+
+    override fun onResume() {
+        Log.d(TAG, "onResume: ")
+        super.onResume()
+    }
+
+    override fun onStop() {
+        Log.d(TAG, "onStop: ")
+        super.onStop()
+    }
+
+    override fun onPause() {
+        Log.d(TAG, "onPause: ")
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        Log.d(TAG, "onDestroy: ")
+        super.onDestroy()
+    }
+
+    override fun onDetach() {
+        Log.d(TAG, "onDetach: ")
+        super.onDetach()
+    }
+
+    override fun onDestroyView() {
+        Log.d(TAG, "onDestroyView: ")
+        super.onDestroyView()
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        Log.d(TAG, "onCreateView: ")
+        return inflater.inflate(R.layout.fragment_shop_item_template, container, false)
+    }
+
+    override fun onAttach(context: Context) {
+        Log.d(TAG, "onAttach: ")
+        super.onAttach(context)
+        if (context is OnEditingFinishedListener) {
+            onEditingFinishedListener = context
+        } else {
+            throw RuntimeException("В $context не реализован интерфейс")
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        Log.d(TAG, "onViewCreated: ")
         initializeAllElements(view)
         screenSelection()
         observeViewModel()
@@ -60,11 +109,10 @@ class ShopItemFragment : Fragment() {
 
     private fun observeViewModel() {
         viewModel.shouldCloseScreenLD.observe(viewLifecycleOwner) {
-            activity?.onBackPressed()
+            onEditingFinishedListener.onEditingFinished()
         }
 
         viewModel.errorInputNameLD.observe(viewLifecycleOwner) {
-            Log.d(TAG, "observeViewModel: it = $it")
             if (it) {
                 textInputLayoutName.error = getString(R.string.error_name)
             } else {
@@ -151,6 +199,10 @@ class ShopItemFragment : Fragment() {
         buttonSave = view.findViewById(R.id.buttonSave)
 
         viewModel = ViewModelProvider(this).get(ShopItemViewModel::class.java)
+    }
+
+    interface OnEditingFinishedListener {
+        fun onEditingFinished()
     }
 
     companion object {

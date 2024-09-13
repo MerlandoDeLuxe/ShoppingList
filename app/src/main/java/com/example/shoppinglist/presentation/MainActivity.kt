@@ -2,6 +2,7 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -46,20 +47,20 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
     private fun isVerticalOrientation() =
         shopItemContainer == null    //Метод, проверяющий, что мы в вертикальном режиме.
 
-    private fun launchFragmentOnMainScreen(
-        shopItemId: Int = ShopItem.UNDEFINED_ID
-    ) {
+    private fun launchFragmentOnMainScreen(shopItemId: Int = ShopItem.UNDEFINED_ID) {
         supportFragmentManager.popBackStack() //Удалить из бекстека предыдущий фрагмент. Если его там нет, то он ничего не делает
         //Если мы не в вертикальной, а горизонтальной ориентации, то сразу вызываем отображение фрагмента на добавление элемента
         Log.d(TAG, "onCreate: isVerticalOrientation = ${isVerticalOrientation()}")
         if (!isVerticalOrientation()) {
             if (shopItemId != ShopItem.UNDEFINED_ID) {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceEditItem(shopItemId))
+                    .replace(
+                        R.id.shop_item_container,
+                        ShopItemFragment.newInstanceEditItem(shopItemId)
+                    )
                     .addToBackStack(null)
                     .commit()
             } else {
-                val fragment = ShopItemFragment.newInstanceAddItem()
                 supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.shop_item_container, ShopItemFragment.newInstanceAddItem()
@@ -70,8 +71,8 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
         }
     }
 
-    override fun onEditingFinished() {
-        Toast.makeText(this@MainActivity, "Успешно", Toast.LENGTH_SHORT).show()
+    override fun onEditingFinished(message: String) {
+        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
         supportFragmentManager.popBackStack()
     }
 

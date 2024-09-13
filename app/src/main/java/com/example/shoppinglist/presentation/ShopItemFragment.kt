@@ -37,41 +37,6 @@ class ShopItemFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun onStart() {
-        Log.d(TAG, "onStart: ")
-        super.onStart()
-    }
-
-    override fun onResume() {
-        Log.d(TAG, "onResume: ")
-        super.onResume()
-    }
-
-    override fun onStop() {
-        Log.d(TAG, "onStop: ")
-        super.onStop()
-    }
-
-    override fun onPause() {
-        Log.d(TAG, "onPause: ")
-        super.onPause()
-    }
-
-    override fun onDestroy() {
-        Log.d(TAG, "onDestroy: ")
-        super.onDestroy()
-    }
-
-    override fun onDetach() {
-        Log.d(TAG, "onDetach: ")
-        super.onDetach()
-    }
-
-    override fun onDestroyView() {
-        Log.d(TAG, "onDestroyView: ")
-        super.onDestroyView()
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -87,7 +52,7 @@ class ShopItemFragment : Fragment() {
         if (context is OnEditingFinishedListener) {
             onEditingFinishedListener = context
         } else {
-            throw RuntimeException("В $context не реализован интерфейс")
+            throw RuntimeException(getString(R.string.interface_is_not_init_in_module, context))
         }
     }
 
@@ -109,7 +74,7 @@ class ShopItemFragment : Fragment() {
 
     private fun observeViewModel() {
         viewModel.shouldCloseScreenLD.observe(viewLifecycleOwner) {
-            onEditingFinishedListener.onEditingFinished()
+            onEditingFinishedListener.onEditingFinished(getString(R.string.success))
         }
 
         viewModel.errorInputNameLD.observe(viewLifecycleOwner) {
@@ -131,28 +96,22 @@ class ShopItemFragment : Fragment() {
 
     private fun addTextChangeListeners() {
         editTextName.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
-            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 viewModel.resetErrorInputName()
             }
 
-            override fun afterTextChanged(s: Editable?) {
-
-            }
+            override fun afterTextChanged(s: Editable?) {}
         })
         editTextQuantity.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 viewModel.resetErrorInputQuantity()
             }
 
-            override fun afterTextChanged(s: Editable?) {
-            }
+            override fun afterTextChanged(s: Editable?) {}
         })
     }
 
@@ -164,6 +123,14 @@ class ShopItemFragment : Fragment() {
         }
         buttonSave.setOnClickListener {
             viewModel.editShopItem(editTextName.text?.toString(), editTextQuantity.text?.toString())
+        }
+
+        //Проверка, что элемент не был удаен в процессе редактирования.
+        // Если это случилось, то выходим из редактирования, вызывая метод интерфейса
+        viewModel.monitoringShopItemExists(shopItemId).observe(viewLifecycleOwner) {
+            if (it == null) {
+                onEditingFinishedListener.onEditingFinished(getString(R.string.element_was_removed))
+            }
         }
     }
 
@@ -202,7 +169,7 @@ class ShopItemFragment : Fragment() {
     }
 
     interface OnEditingFinishedListener {
-        fun onEditingFinished()
+        fun onEditingFinished(message: String)
     }
 
     companion object {

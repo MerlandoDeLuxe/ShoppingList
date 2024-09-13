@@ -32,6 +32,10 @@ class ShopItemViewModel(application: Application) : AndroidViewModel(application
     val shouldCloseScreenLD: LiveData<Unit>
         get() = _shouldCloseScreenLD
 
+    fun monitoringShopItemExists(id: Int): LiveData<ShopItem> {
+        return connectDB.monitoringShopItemExist(id)
+    }
+
     fun getShopItem(id: Int) {
         val disposable = connectDB.getShopItem(id)
             .subscribeOn(Schedulers.io())

@@ -37,7 +37,7 @@ class ShopItemActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinished
         }
     }
 
-    override fun onEditingFinished() {
+    override fun onEditingFinished(message: String) {
         finish()
     }
 

@@ -35,6 +35,9 @@ interface ShopListItemDAO {
     @Query("select * from shop_item where id = :id")
     fun getShopItem(id: Int): Single<ShopItem>
 
+    @Query("select * from shop_item where id = :id")
+    fun monitoringShopItemExist(id: Int): LiveData<ShopItem>
+
     @Insert
-    fun addNewShopItemToDB(shopItem: ShopItem):Completable
+    fun addNewShopItemToDB(shopItem: ShopItem): Completable
 }

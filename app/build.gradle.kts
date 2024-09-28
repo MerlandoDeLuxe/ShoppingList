@@ -45,6 +45,13 @@ dependencies {
     implementation ("io.reactivex.rxjava3:rxjava:3.1.5")
     implementation ("io.reactivex.rxjava3:rxandroid:3.0.2")
     kapt("androidx.room:room-compiler:$room_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+
+    val lifecycle_version = "2.8.6"
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -1,60 +1,37 @@
 package com.example.shoppinglist.data
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.example.shoppinglist.data.database.ShopListItemDAO
+import androidx.lifecycle.map
+import com.example.shoppinglist.data.database.ShopListItemDatabase
 import com.example.shoppinglist.domain.ShopItem
 import com.example.shoppinglist.domain.ShopListRepository
-import kotlin.random.Random
 
-object ShopListRepositoryImpl : ShopListRepository {
+class ShopListRepositoryImpl(private val application: Application) : ShopListRepository {
     private val TAG = "ShopListRepositoryImpl"
 
-    private val shopListLD: MutableLiveData<List<ShopItem>> = MutableLiveData()
-    private val listOfItems = mutableListOf<ShopItem>()
+    private val connectDB = ShopListItemDatabase.getInstance(application).shopListItemDAO()
+    private val mapper = ShopListMapper()
 
-    private var autoIncrementId = 0
-
-    init {
-        for (i in 0..10) {
-            val item = ShopItem("Имя $i", i, Random.nextBoolean(), 0)
-            listOfItems.add(item)
-        }
-        Log.d(TAG, "Элементы списка: $listOfItems")
+    override suspend fun addShopItemToList(shopItem: ShopItem) {
+        connectDB.addNewShopItemToDB(mapper.mapEntityToDbModel(shopItem))
     }
 
-    override fun addShopItemToList(shopItem: ShopItem) {
-        if (shopItem.id == ShopItem.UNDEFINED_ID) {
-            shopItem.id = autoIncrementId++
-        }
-        listOfItems.add(shopItem)
-        updateList()
+    override suspend fun getShopItem(shopItemId: Int): ShopItem {
+        val shopItemDbModel = connectDB.getShopItem(shopItemId)
+        Log.d(TAG, "getShopItem: shopItemDbModel = $shopItemDbModel")
+        return mapper.mapDbModelToEntity(shopItemDbModel)
     }
 
-    override fun getShopItem(shopItemId: Int): ShopItem {
-        return listOfItems.find { it.id == shopItemId }
-            ?: throw RuntimeException("Элемент с ID $shopItemId не найден")
+    override fun getShopList() =
+        connectDB.getShopListFromDB().map { mapper.mapListDbModelToListEntity(it) }
+
+
+    override suspend fun removeShopItem(shopItem: ShopItem) {
+        connectDB.removeShopItemFromDB(mapper.mapEntityToDbModel(shopItem))
     }
 
-    override fun getShopList(): List<ShopItem> {
-        return listOfItems
-    }
-
-    override fun removeShopItem(shopItem: ShopItem) {
-        listOfItems.remove(shopItem)
-        updateList()
-    }
-
-    override fun editShopItem(shopItem: ShopItem): ShopItem {
-        val oldElement = getShopItem(shopItem.id)
-        removeShopItem(oldElement)
-        addShopItemToList(shopItem)
-        updateList()
-        return shopItem
-    }
-
-    private fun updateList(){
-        shopListLD.value = listOfItems.toList()
+    override suspend fun editShopItem(shopItem: ShopItem) {
+        connectDB.addNewShopItemToDB(mapper.mapEntityToDbModel(shopItem))
     }
 }

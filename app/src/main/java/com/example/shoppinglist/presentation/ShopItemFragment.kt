@@ -11,10 +11,13 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class ShopItemFragment : Fragment() {
 
@@ -94,7 +97,10 @@ class ShopItemFragment : Fragment() {
         }
     }
 
+
+
     private fun addTextChangeListeners() {
+
         editTextName.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -125,9 +131,10 @@ class ShopItemFragment : Fragment() {
             viewModel.editShopItem(editTextName.text?.toString(), editTextQuantity.text?.toString())
         }
 
-        //Проверка, что элемент не был удаен в процессе редактирования.
+        //Проверка, что элемент не был удален в процессе редактирования.
         // Если это случилось, то выходим из редактирования, вызывая метод интерфейса
         viewModel.monitoringShopItemExists(shopItemId).observe(viewLifecycleOwner) {
+            Log.d(TAG, "launchEditScreenMode: it = $it")
             if (it == null) {
                 onEditingFinishedListener.onEditingFinished(getString(R.string.element_was_removed))
             }

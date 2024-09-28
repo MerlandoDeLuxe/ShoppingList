@@ -5,17 +5,20 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import com.example.shoppinglist.data.ShopListRepositoryImpl
+import com.example.shoppinglist.data.database.ShopItemDbModel
 import com.example.shoppinglist.data.database.ShopListItemDatabase
+import com.example.shoppinglist.domain.AddShopItemToListUseCase
+import com.example.shoppinglist.domain.EditShopItemUseCase
+import com.example.shoppinglist.domain.GetShopItemUseCase
 import com.example.shoppinglist.domain.ShopItem
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.launch
 
 class ShopItemViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "ShopItemViewModel"
 
-    private val compositeDisposable = CompositeDisposable()
-    private val connectDB = ShopListItemDatabase.getInstance(application).shopListItemDAO
+    private val connectDB = ShopListItemDatabase.getInstance(application).shopListItemDAO()
 
     private val _shopItemLD = MutableLiveData<ShopItem>()
     val shopItemLD: LiveData<ShopItem>
@@ -32,22 +35,19 @@ class ShopItemViewModel(application: Application) : AndroidViewModel(application
     val shouldCloseScreenLD: LiveData<Unit>
         get() = _shouldCloseScreenLD
 
-    fun monitoringShopItemExists(id: Int): LiveData<ShopItem> {
-        return connectDB.monitoringShopItemExist(id)
-    }
+    private val repository = ShopListRepositoryImpl(application)
+    private val addShopItemToListUseCase = AddShopItemToListUseCase(repository)
+    private val editShopItemUseCase = EditShopItemUseCase(repository)
+    private val getShopItemUseCase = GetShopItemUseCase(repository)
 
     fun getShopItem(id: Int) {
-        val disposable = connectDB.getShopItem(id)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                _shopItemLD.value = it
-                Log.d(TAG, "getShopItem: из БД получен объект $it")
-            }, {
-                Log.d(TAG, "getShopItem: Ошибка подключения к БД: ${it.message}")
-            })
+        viewModelScope.launch {
+            _shopItemLD.value = getShopItemUseCase.getShopItem(id)
+        }
+    }
 
-        compositeDisposable.add(disposable)
+    fun monitoringShopItemExists(shopItemId: Int): LiveData<ShopItemDbModel> {
+        return connectDB.monitoringShopItemExist(shopItemId)
     }
 
     fun addShopItem(inputName: String?, inputQuantity: String?) {
@@ -55,18 +55,11 @@ class ShopItemViewModel(application: Application) : AndroidViewModel(application
         val quantity = parseQuantity(inputQuantity)
         val fieldsValid = validateInput(name, quantity)
         if (fieldsValid) {
-            val shopItem = ShopItem(name, quantity, true, 0)
-
-            val disposable = connectDB.addNewShopItemToDB(shopItem)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    Log.d(TAG, "addShopItem: Добавление успешно завершено")
-                    finishWork()
-                }, {
-                    Log.d(TAG, "addShopItem: Ошибка подключения к БД: ${it.message}")
-                })
-            compositeDisposable.add(disposable)
+            val shopItem = ShopItem(name, quantity, true, ShopItem.UNDEFINED_ID)
+            viewModelScope.launch {
+                addShopItemToListUseCase.addShopItemToList(shopItem)
+                finishWork()
+            }
         }
     }
 
@@ -81,19 +74,10 @@ class ShopItemViewModel(application: Application) : AndroidViewModel(application
         if (fieldsValid) {
             _shopItemLD.let {
                 val tempShopItem = it.value?.copy(name = name, count = quantity)
-                val disposable = tempShopItem?.let { it1 ->
-                    connectDB.editShopItemElement(it1)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({
-                            Log.d(TAG, "editShopItem: Объект успешно изменен")
-                            finishWork()
-                        }, {
-                            Log.d(TAG, "editShopItem: Ошибка подключения к БД: ${it.message}")
-                        })
-                }
-                if (disposable != null) {
-                    compositeDisposable.add(disposable)
+                if (tempShopItem != null) {
+                    viewModelScope.launch {
+                        editShopItemUseCase.editShopItem(tempShopItem)
+                    }
                 }
             }
         }
@@ -134,10 +118,5 @@ class ShopItemViewModel(application: Application) : AndroidViewModel(application
     private fun finishWork() {
         Log.d(TAG, "finishWork: Запись в лайвдату: можно выходить на главный экран")
         _shouldCloseScreenLD.value = Unit
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        compositeDisposable.clear()
     }
 }

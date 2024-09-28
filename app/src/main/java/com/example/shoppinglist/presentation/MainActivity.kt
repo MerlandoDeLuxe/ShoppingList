@@ -2,7 +2,6 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -10,11 +9,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedListener {
     private val TAG = "MainActivity"
@@ -41,7 +43,6 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
         setupOnClickListener()
         setupSwipeClickListener()
         launchFragmentOnMainScreen()
-
     }
 
     private fun isVerticalOrientation() =
@@ -74,13 +75,48 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
     override fun onEditingFinished(message: String) {
         Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
         supportFragmentManager.popBackStack()
+        Log.d(TAG, "onEditingFinished: вфывфы")
     }
 
     private fun observeViewModel() {
         viewModel.getShopListFromDB().observe(this) {
+            Log.d(
+                TAG,
+                "observeViewModel: shopListAdapter размер = ${shopListAdapter.currentList.size}"
+            )
             shopListAdapter.submitList(it)
+            Log.d(
+                TAG,
+                "observeViewModel: shopListAdapter размер = ${shopListAdapter.currentList.size}"
+            )
+            onReachEndListener()
         }
     }
+
+    private fun onReachEndListener() {
+        Log.d(TAG, "onReachEndListener: вошли")
+        if (shopListAdapter.itemCount > 0) {
+            Log.d(TAG, "onReachEndListener: вызов")
+            Log.d(TAG, "onReachEndListener: количество элементов 1 = ${shopListAdapter.itemCount}")
+            Log.d(
+                TAG,
+                "onReachEndListener: количество элементов 2 = ${shopListAdapter.currentList.size}"
+            )
+            Log.d(
+                TAG,
+                "onReachEndListener: shopListAdapter.currentList.size-1 = ${shopListAdapter.currentList.size - 1}"
+            )
+            val pos = shopListAdapter.currentList.size
+            Log.d(TAG, "onReachEndListener: pos = $pos")
+            recycleView.scrollToPosition(shopListAdapter.currentList.size - 1)
+            Log.d(TAG, "onReachEndListener: количество элементов 3 = ${shopListAdapter.itemCount}")
+            Log.d(
+                TAG,
+                "onReachEndListener: количество элементов 4 = ${shopListAdapter.currentList.size}"
+            )
+        }
+    }
+
 
     private fun setupOnClickListener() {
         shopListAdapter.onShopItemLongClickListener = {

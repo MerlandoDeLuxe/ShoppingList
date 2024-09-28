@@ -72,8 +72,11 @@ class ShopListAdapter :
             true
         }
 
-        holder.itemView.setOnClickListener({
+        holder.itemView.setOnClickListener {
             onShopItemClickListener?.invoke(shopItem)
-        })
+        }
+
+        Log.d(TAG, "onBindViewHolder: position = $position")
+        Log.d(TAG, "onBindViewHolder: currentList.size = ${currentList.size}")
     }
 }

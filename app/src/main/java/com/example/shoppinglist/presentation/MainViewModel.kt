@@ -1,103 +1,41 @@
 package com.example.shoppinglist.presentation
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.shoppinglist.data.ShopListRepositoryImpl
-import com.example.shoppinglist.data.database.ShopListItemDatabase
 import com.example.shoppinglist.domain.EditShopItemUseCase
 import com.example.shoppinglist.domain.GetShopListItemUseCase
 import com.example.shoppinglist.domain.RemoveShopItemUseCase
 import com.example.shoppinglist.domain.ShopItem
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MainViewModel"
 
-    private val connectDB = ShopListItemDatabase.getInstance(application).shopListItemDAO
-    private val compositeDisposable = CompositeDisposable()
-
-    private val repository = ShopListRepositoryImpl
+    private val repository = ShopListRepositoryImpl(application)
 
     private val getShopListItemUseCase = GetShopListItemUseCase(repository)
     private val editShopListItemUseCase = EditShopItemUseCase(repository)
     private val removeShopItemUseCase = RemoveShopItemUseCase(repository)
 
-
     init {
-//        removeAllElementsShopItemElementFromDB()
-//        getShopListAndSetToDB()
         getShopListFromDB()
     }
 
-    fun getShopListFromDB(): LiveData<MutableList<ShopItem>> {
-        return connectDB.getListFromDB()
+    fun getShopListFromDB(): LiveData<List<ShopItem>> {
+        return getShopListItemUseCase.getShopList()
     }
 
     fun removeShopItemFromDB(shopItem: ShopItem) {
-        val disposable = connectDB.removeShopItemFromDB(shopItem)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                Log.d(TAG, "removeShopItemFromDB: удаление $shopItem успешно завершено")
-            }, {
-                Log.d(TAG, "removeShopItemFromDB: Ошибка подключения к БД: ${it.message}")
-            })
-        compositeDisposable.add(disposable)
-    }
-
-    fun removeAllElementsShopItemFromDB() {
-        val disposable = connectDB.removeAllElementsShopItemFromDB()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                Log.d(TAG, "removeShopItemFromDB: Удаление всех элементов успешно завершено")
-            }, {
-                Log.d(TAG, "removeShopItemFromDB: Ошибка подклчюения к БД ${it.message}")
-            })
-        compositeDisposable.add(disposable)
+        viewModelScope.launch { removeShopItemUseCase.removeShopItem(shopItem) }
     }
 
     fun editShopListItemAndSaveToDB(shopItem: ShopItem) {
-        val tempShopItem = shopItem.copy(enabled = !shopItem.enabled)
-        val disposable =
-            connectDB.editShopItemElement(tempShopItem)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    Log.d(TAG, "editShopListItemAndSaveToDB: Изменение успешно")
-                    Log.d(TAG, "editShopListItemAndSaveToDB: shopItem.enabled = ${shopItem.enabled}")
-                    getShopListFromDB()
-                }, {
-                    Log.d(
-                        TAG,
-                        "editShopListItemAndSaveToDB: Ошибка подключения к БД: ${it.message}"
-                    )
-                })
-        compositeDisposable.add(disposable)
-    }
-
-    fun getShopListAndSetToDB() {
-        Log.d(TAG, "getShopListAndSetToDB: мы тут")
-        val disposable = getShopListItemUseCase.getShopList().let {
-            connectDB.saveListToDatabase(it)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    getShopListFromDB()
-                }, {
-                    Log.d(TAG, "getShopListAndSetToDB: Ошибка подключения к БД: ${it.message}")
-                })
+        viewModelScope.launch {
+            val tempShopItem = shopItem.copy(enabled = !shopItem.enabled)
+            editShopListItemUseCase.editShopItem(tempShopItem)
         }
-        compositeDisposable.add(disposable)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        compositeDisposable.clear()
     }
 }
